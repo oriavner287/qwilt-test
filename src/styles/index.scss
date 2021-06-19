@@ -1,0 +1,23 @@
+@font-face {
+    font-family: 'openSansRegular';
+    src: local('openSansRegular'), url('@fonts/OpenSans-Regular.ttf') format('truetype');
+    font-weight: 900;
+}
+
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    outline: none;
+}
+
+body {
+    font-family: 'openSansRegular', sans-serif;
+}
+
+.container {
+    display: flex;
+    margin: 5em;
+}

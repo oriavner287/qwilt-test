@@ -1,0 +1,17 @@
+{
+    "strict": true,
+    "compilerOptions": {
+        "moduleResolution": "Node",
+        "baseUrl": "./",
+        "paths": {
+            "@oriavner/*": ["./src/*"],
+            "@styles/*": ["./src/styles/*"],
+            "@fonts/*": ["./src/public/fonts/*"]
+        },
+        "target": "ESNext",
+        "module": "ESNext",
+        "jsx": "react"
+    },
+    "include": ["./src/**/*"],
+    "exclude": ["node_modules"]
+}
