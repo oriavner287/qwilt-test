@@ -3,7 +3,6 @@ import { Tabs } from 'antd'
 import { ReloadOutlined } from '@ant-design/icons'
 import shallow from 'zustand/shallow'
 import useTabsStore from '@oriavner/store/tabs'
-import fetchDataAPI from '@oriavner/utils/fetchDataAPI'
 import Layout from '@oriavner/hoc/Layout'
 
 const { TabPane } = Tabs
@@ -12,6 +11,13 @@ const initialPanes = [
     { title: 'Data A', content: 'Content of Tab 1', key: '1' },
     { title: 'Data B', content: 'Content of Tab 2', key: '2' }
 ]
+
+function createAbortController() {
+    const abortCtrl = new AbortController()
+    const opts = { signal: abortCtrl.signal }
+
+    return { abortCtrl, opts }
+}
 
 function App() {
     const [isLoading, setIsLoading] = React.useState(false)
@@ -29,32 +35,36 @@ function App() {
 
     const onChange = activeKey => setActiveKey(activeKey)
 
-    const onFetchDataHandler = React.useCallback(
-        async shouldReload => {
-            if (shouldReload || !tab1 || !tab2) {
-                setIsLoading(true)
+    const onFetchDataHandler = async (opts = {}, shouldReload = false) => {
+        shouldReload && setIsLoading(true)
+        const res = await fetch(url, opts)
+        const data = await res.json()
+        setTabData(activeKey, data)
+        shouldReload && setIsLoading(false)
+    }
 
-                const data = await fetchDataAPI(url)
-                setTabData(activeKey, data)
+    React.useEffect(() => {
+        const { abortCtrl, opts } = createAbortController()
 
-                setIsLoading(false)
+        ;(async () => {
+            try {
+                if (!tab1 || !tab2) {
+                    await onFetchDataHandler(opts, true)
+                }
+            } catch (err) {
+                console.log(err)
             }
-        },
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [activeKey, setTabData, url]
-    )
+        })()
 
-    React.useEffect(() => {
-        onFetchDataHandler(false)
-    }, [onFetchDataHandler])
-
-    React.useEffect(() => {
         const interval = setInterval(async () => {
-            const data = await fetchDataAPI(url)
-            setTabData(activeKey, data)
+            await onFetchDataHandler(opts)
         }, 30000)
 
-        return () => clearInterval(interval)
+        return () => {
+            clearInterval(interval)
+            abortCtrl.abort()
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeKey, url, setTabData])
 
     return (
@@ -73,7 +83,7 @@ function App() {
                                         </span>
                                         {activeKey === pane.key ? (
                                             <ReloadOutlined
-                                                onClick={() => onFetchDataHandler(true)}
+                                                onClick={() => onFetchDataHandler(undefined, true)}
                                             />
                                         ) : null}
                                     </div>
