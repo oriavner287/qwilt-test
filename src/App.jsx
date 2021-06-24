@@ -12,13 +12,6 @@ const initialPanes = [
     { title: 'Data B', content: 'Content of Tab 2', key: '2' }
 ]
 
-function createAbortController() {
-    const abortCtrl = new AbortController()
-    const opts = { signal: abortCtrl.signal }
-
-    return { abortCtrl, opts }
-}
-
 function App() {
     const [isLoading, setIsLoading] = React.useState(false)
     const [activeKey, setActiveKey] = React.useState(initialPanes[0].key)
@@ -35,7 +28,7 @@ function App() {
 
     const onChange = activeKey => setActiveKey(activeKey)
 
-    const onFetchDataHandler = async (opts = {}, shouldReload = false) => {
+    const onFetchDataHandler = async (opts = {}, shouldReload = true) => {
         shouldReload && setIsLoading(true)
         const res = await fetch(url, opts)
         const data = await res.json()
@@ -44,12 +37,13 @@ function App() {
     }
 
     React.useEffect(() => {
-        const { abortCtrl, opts } = createAbortController()
+        const abortCtrl = new AbortController()
+        const opts = { signal: abortCtrl.signal }
 
         ;(async () => {
             try {
                 if (!tab1 || !tab2) {
-                    await onFetchDataHandler(opts, true)
+                    await onFetchDataHandler(opts)
                 }
             } catch (err) {
                 console.log(err)
@@ -57,7 +51,7 @@ function App() {
         })()
 
         const interval = setInterval(async () => {
-            await onFetchDataHandler(opts)
+            await onFetchDataHandler(opts, false)
         }, 30000)
 
         return () => {
@@ -82,9 +76,7 @@ function App() {
                                             {pane.title}
                                         </span>
                                         {activeKey === pane.key ? (
-                                            <ReloadOutlined
-                                                onClick={() => onFetchDataHandler(undefined, true)}
-                                            />
+                                            <ReloadOutlined onClick={onFetchDataHandler} />
                                         ) : null}
                                     </div>
                                 }
